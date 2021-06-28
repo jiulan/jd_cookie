@@ -2,7 +2,6 @@
 const QYWX_KEY = '' || process.env.QYWX_KEY;
 const QYWX_AM = '' || process.env.QYWX_AM;
 const UPDATE_API = '' || process.env.UPDATE_API;
-const notify = require('./sendNotify');
 const express = require('express');
 const got = require('got');
 const path = require('path');
@@ -355,8 +354,7 @@ async function updateCookie(cookie) {
 async function cookieFlow(cookie, userMsg) {
   try {
     const updateMsg = await updateCookie(cookie);
-    // await sendMsg(updateMsg, cookie, userMsg);
-    await notify.sendNotify(updateMsg, `${cookie}\n${userMsg}`);
+     await sendMsg(updateMsg, cookie, userMsg);
     return msg;
   } catch (err) {
     return '';
