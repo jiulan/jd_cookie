@@ -1,28 +1,24 @@
 {
-  "name": "get-jd-cookies",
+  "name": "get-jd-cookie",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "publish": "vercel --prod"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Echowxsy/GetJDCookies.git"
+    "start": "node index.js"
   },
   "keywords": [],
-  "author": "",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Echowxsy/GetJDCookies/issues"
-  },
-  "homepage": "https://github.com/Echowxsy/GetJDCookies#readme",
+  "author": "Echowxsy",
   "dependencies": {
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "got": "^11.8.2",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "crypto-js": "^4.0.0",
+    "got": "^11.5.1",
+    "http-server": "^0.12.3",
+    "tough-cookie": "^4.0.0",
+    "download": "^8.0.0",
+    "request": "^2.88.2"
   }
 }
