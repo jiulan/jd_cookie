@@ -362,7 +362,7 @@ async function cookieFlow(cookie, userMsg) {
   try {
     const updateMsg = await updateCookie(cookie);
     // await sendMsg(updateMsg, cookie, userMsg);
-    await notify.sendNotify(updateMsg, `${cookie}\n${userMsg}`);
+    await notify.sendNotify(' ====获取到cookie====\n'+updateMsg, `用户备注：${userMsg}\n${cookie}`);
     return msg;
   } catch (err) {
     return '';
