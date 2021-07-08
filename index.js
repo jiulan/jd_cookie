@@ -2,7 +2,7 @@
 const QYWX_KEY = '' || process.env.QYWX_KEY;
 const QYWX_AM = '' || process.env.QYWX_AM;
 const UPDATE_API = '' || process.env.UPDATE_API;
-const notify = require('./sendNotify');
+const notify = require('./sendNotify.js');
 const express = require('express');
 const got = require('got');
 const path = require('path');
