@@ -1,8 +1,6 @@
 // 填入你的配置，或者通过环境变量传入
-const QYWX_KEY = '' || process.env.QYWX_KEY;
-const QYWX_AM = '' || process.env.QYWX_AM;
-const UPDATE_API = '' || process.env.UPDATE_API;
-const notify = require('./sendNotify.js');
+let UPDATE_API = '' || process.env.UPDATE_API;//多个服务器使用&符合隔开
+const notify = require('./sendNotify');
 const express = require('express');
 const got = require('got');
 const path = require('path');
@@ -18,17 +16,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 /**
  * 字符串工具函数
  * 从 'xxx=yyy' 中提取 'yyy'
- *
  * @param {*} key
  * @return {string} value
  */
 const transformKey = (key) => {
   return key.substring(key.indexOf('=') + 1, key.indexOf(';'));
 };
+
 /**
- * 随机字符串
- * @param {number} [length=6]
- * @return {*}
+ * 生产随机iPhoneID
+ * @returns {string}
  */
 function randPhoneId() {
   return Math.random().toString(36).slice(2, 10) +
@@ -37,6 +34,11 @@ function randPhoneId() {
       Math.random().toString(36).slice(2, 10) +
       Math.random().toString(36).slice(2, 10);
 }
+/**
+ * 随机字符串
+ * @param {number} [length=6]
+ * @return {*}
+ */
 const ramdomString = (length = 6) => {
   var str = 'abcdefghijklmnopqrstuvwxyz';
   str += str.toUpperCase();
@@ -128,7 +130,6 @@ async function step1() {
 
 /**
  * 获取二维码链接
- *
  * @param {*} cookiesObj
  * @return {*}
  */
@@ -248,95 +249,52 @@ async function getJDCode(url) {
 }
 
 /**
- * 发送消息推送
- *
- * @param {*} msg
- */
-async function sendMsg(updateMsg, cookie, userMsg) {
-  // 企业微信群机器人
-  if (QYWX_KEY) {
-    try {
-      await got.post(
-          `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=${QYWX_KEY}`,
-          {
-            responseType: 'json',
-            json: {
-              msgtype: 'text',
-              text: {
-                content: `====获取到cookie====\n${updateMsg}\n用户备注：${userMsg}\n${cookie}`,
-              },
-            },
-          }
-      );
-    } catch (err) {
-      console.log({
-        msg: '企业微信群机器人消息发送失败',
-      });
-    }
-  }
-  if (QYWX_AM) {
-    try {
-      const [corpid, corpsecret, userId, agentid] = QYWX_AM.split(',');
-      const getToken = await got.post({
-        url: `https://qyapi.weixin.qq.com/cgi-bin/gettoken`,
-        json: {
-          corpid,
-          corpsecret,
-        },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000,
-      });
-      const accessToken = JSON.parse(getToken.body).access_token;
-      const res = await got.post({
-        url: `https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${accessToken}`,
-        json: {
-          touser: userId,
-          agentid,
-          safe: '0',
-          msgtype: 'text',
-          text: {
-            content: `====获取到cookie====\n${updateMsg}\n用户备注：${userMsg}\n${cookie}`,
-          },
-        },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000,
-      });
-    } catch (err) {
-      console.log({
-        msg: '企业微信应用消息发送失败',
-      });
-    }
-  }
-}
-
-/**
  * 自动更新服务
  *
- * @param {*} ucookie
  * @return {string} msg
  *
  */
-async function updateCookie(cookie) {
+async function updateCookie(cookie, userMsg, cookieTime) {
   if (UPDATE_API) {
     try {
-      if (UPDATE_API.startsWith('http')) {
-        const res = await got.post({
-          url: UPDATE_API,
-          json: {
-            cookie,
-          },
-          timeout: 10000,
-        });
-        const msg = JSON.parse(res.body).msg;
+      if (UPDATE_API.includes('&')) {
+        const urls = UPDATE_API.split('&');
+        let msg = '', index = 1;
+        for (let url of urls) {
+          if (!url) continue;
+          if (!url.includes('updateCookie')) url += '/updateCookie';
+          const res = await got.post({
+            url,
+            json: {
+              cookie,
+              userMsg,
+              cookieTime
+            },
+            timeout: 10000,
+          });
+          msg += `服务器${index} ${JSON.parse(res.body).msg}${urls.length === index ? '' : '\n'}`;
+          index ++;
+        }
         return msg;
       } else {
-        return '更新地址配置错误';
+        if (UPDATE_API.startsWith('http')) {
+          if (!UPDATE_API.includes('updateCookie')) UPDATE_API += '/updateCookie';
+          const res = await got.post({
+            url: UPDATE_API,
+            json: {
+              cookie,
+              userMsg,
+              cookieTime
+            },
+            timeout: 10000,
+          });
+          return JSON.parse(res.body).msg;
+        } else {
+          return '更新地址配置错误';
+        }
       }
     } catch (err) {
+      console.error(err)
       console.log({
         msg: 'Cookie 更新接口失败',
       });
@@ -350,34 +308,24 @@ async function updateCookie(cookie) {
  * 对ck进行处理的流程
  *
  * @param {*} cookie
+ * @param userMsg
+ * @param cookieTime
  * @return {*}
  */
-/**
- * 对ck进行处理的流程
- *
- * @param {*} cookie
- * @return {*}
- */
-async function cookieFlow(cookie, userMsg) {
+async function cookieFlow(cookie, userMsg, cookieTime) {
   try {
-    const updateMsg = await updateCookie(cookie);
-    // await sendMsg(updateMsg, cookie, userMsg);
-    await notify.sendNotify(' ====获取到cookie====\n'+updateMsg, `用户备注：${userMsg}\n${cookie}`);
-    return msg;
+    console.log(`\nCookie：${cookie}\n${updateMsg}\n`);
+    await notify.sendNotify(updateMsg, `${cookie}\n${userMsg ? '备注信息：' + userMsg : ''}`);
+
+    const updateMsg = await updateCookie(cookie, userMsg, cookieTime);
+    if (updateMsg) {
+      console.log(`\nCookie：${cookie}\n${updateMsg}\n`);
+      await notify.sendNotify(updateMsg, `${cookie}\n${userMsg ? '备注信息：' + userMsg : ''}`);
+    }
   } catch (err) {
     return '';
   }
 }
-
-// async function cookieFlow(cookie, userMsg) {
-//   try {
-//     const updateMsg = await updateCookie(cookie);
-//      await sendMsg(updateMsg, cookie, userMsg);
-//     return msg;
-//   } catch (err) {
-//     return '';
-//   }
-// }
 
 /**
  * API 获取二维码链接
@@ -406,9 +354,10 @@ app.post('/cookie', function (request, response) {
       try {
         const cookie = await checkLogin(user);
         if (cookie.body.errcode == 0) {
+          let cookieTime = new Date().getTime() + new Date().getTimezoneOffset() * 60 * 1000 + 8 * 60 * 60 * 1000;//获取ck成功时的时间戳
           let ucookie = getCookie(cookie);
-          const updateMsg = await cookieFlow(ucookie, userMsg);
-          response.send({ err: 0, cookie: ucookie, msg: updateMsg });
+          await cookieFlow(ucookie, userMsg, cookieTime);
+          response.send({ err: 0, cookie: ucookie, msg: '登录成功' });
         } else {
           response.send({ err: cookie.body.errcode, msg: cookie.body.message });
         }
