@@ -314,9 +314,6 @@ async function updateCookie(cookie, userMsg, cookieTime) {
  */
 async function cookieFlow(cookie, userMsg, cookieTime) {
   try {
-    console.log(`\nCookie：${cookie}\n${updateMsg}\n`);
-    await notify.sendNotify(updateMsg, `${cookie}\n${userMsg ? '备注信息：' + userMsg : ''}`);
-
     const updateMsg = await updateCookie(cookie, userMsg, cookieTime);
     if (updateMsg) {
       console.log(`\nCookie：${cookie}\n${updateMsg}\n`);
