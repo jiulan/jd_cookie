@@ -115,15 +115,15 @@
     var jdCode = '';
     var loginUrl = '';
     var resDiv = document.getElementById('res');
-    document.getElementById('jdcode').addEventListener('click', function () {
-      if (jdCode) {
-        copyText(jdCode);
-        alert('复制成功，正在跳转App');
-        window.open('openapp.jdmobile://');
-      } else {
-        alert('还没加载好，请稍后重试');
-      }
-    });
+    // document.getElementById('jdcode').addEventListener('click', function () {
+    //   if (jdCode) {
+    //     copyText(jdCode);
+    //     alert('复制成功，正在跳转App');
+    //     window.open('openapp.jdmobile://');
+    //   } else {
+    //     alert('还没加载好，请稍后重试');
+    //   }
+    // });
     document.getElementById('jumpapp').addEventListener('click', function () {
       if (loginUrl) {
         window.location.href = `openapp.jdmobile://virtual/ad?params=${encodeURI(
